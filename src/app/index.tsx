@@ -12,20 +12,22 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { auth } from "../firebaseConfig";
+import { auth } from "../../firebaseConfig";
 
 export default function Index() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [signUpClicked, setSignUpClicked] = useState(false);
+  const [failedSignIn, setFailedSignIn] = useState(false);
 
   const signIn = async () => {
     try {
       const user = await signInWithEmailAndPassword(auth, email, password);
-      if (user) router.replace("/(tabs)");
+      if (user) router.replace("/home");
     } catch (error) {
       console.error("Sign-in error:", error);
+      setFailedSignIn(true);
     }
   };
 
@@ -36,7 +38,7 @@ export default function Index() {
         displayName: username,
         photoURL: null,
       });
-      if (user) router.replace("/(tabs)");
+      if (user) router.replace("/home");
     } catch (error) {
       console.error("Sign-up error:", error);
     }
@@ -63,6 +65,12 @@ export default function Index() {
           value={username}
           onChangeText={setUsername}
         />
+      )}
+
+      {failedSignIn && (
+        <Text style={styles.errorText}>
+          Failed to sign in. Please try again.
+        </Text>
       )}
 
       <TextInput
@@ -192,5 +200,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     color: "#666",
+  },
+  errorText: {
+    color: "red",
+    textAlign: "center",
+    marginBottom: 10,
   },
 });
