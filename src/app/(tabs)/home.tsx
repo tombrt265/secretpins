@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import GroupsDialog from "../../components/groups-dialog";
+import { API_BASE_URL } from "../../utils/api";
 
 interface Group {
   id: number;
@@ -19,8 +20,6 @@ interface Group {
   avatar_url: string;
   owner_id: number;
 }
-
-const API_BASE = "https://example.com"; // Passe deine API-URL an
 
 const GroupsPage: React.FC = () => {
   const auth = getAuth();
@@ -39,7 +38,7 @@ const GroupsPage: React.FC = () => {
     try {
       setLoading(true);
       const res = await fetch(
-        `${API_BASE}/api/groups?user_id=${encodeURIComponent(userId)}`
+        `${API_BASE_URL}/api/groups?user_id=${encodeURIComponent(userId)}`
       );
       if (!res.ok) throw new Error("Failed to fetch groups");
       const json = await res.json();
@@ -61,7 +60,7 @@ const GroupsPage: React.FC = () => {
   // Neue Gruppe erstellen
   const handleCreateGroup = async (name: string, category: string) => {
     try {
-      const res = await fetch(`${API_BASE}/api/groups`, {
+      const res = await fetch(`${API_BASE_URL}/api/groups`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -76,7 +75,7 @@ const GroupsPage: React.FC = () => {
       const group = await res.json();
 
       const inviteRes = await fetch(
-        `${API_BASE}/api/groups/${group.id}/invite`,
+        `${API_BASE_URL}/api/groups/${group.id}/invite`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
