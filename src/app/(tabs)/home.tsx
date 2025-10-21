@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "@env";
 import { useRouter } from "expo-router";
 import { getAuth } from "firebase/auth";
 import React, { useCallback, useEffect, useState } from "react";
@@ -11,7 +12,6 @@ import {
   View,
 } from "react-native";
 import GroupsDialog from "../../components/groups-dialog";
-import { API_BASE_URL } from "../../utils/api";
 
 interface Group {
   id: number;
