@@ -1,27 +1,27 @@
 import { AuthContext } from "@/contexts/AuthContext";
 import { useRouter } from "expo-router";
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   FlatList,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import GroupsDialog from "../../components/groups-dialog";
-import { API_URL } from "../../utils/api";
+import { supabase } from "../../utils/supabaseClient";
 
 interface Group {
   id: number;
   name: string;
   category: string;
   avatar_url: string;
-  owner_id: number;
 }
 
-const GroupsPage: React.FC = () => {
+export default function GroupsPage() {
   const router = useRouter();
   const auth = useContext(AuthContext);
   const uid = auth?.user?.id || null;
@@ -30,17 +30,17 @@ const GroupsPage: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Lädt Gruppen des aktuellen Nutzers
   const fetchGroups = useCallback(async () => {
     if (!uid) return;
+
     try {
       setLoading(true);
-      const res = await fetch(
-        `${API_URL}/api/groups?user_id=${encodeURIComponent(uid)}`
-      );
-      if (!res.ok) throw new Error("Failed to fetch groups");
-      const json = await res.json();
-      setGroups(json);
+      const { data, error } = await supabase.functions.invoke("get-groups");
+      if (error) {
+        console.error("Error fetching groups:", error);
+        throw new Error(error.message);
+      }
+      setGroups(JSON.parse(data));
     } catch (err) {
       console.error(err);
       Alert.alert("Error", "Failed to fetch groups");
@@ -55,46 +55,31 @@ const GroupsPage: React.FC = () => {
     }
   }, [uid, fetchGroups]);
 
-  // Neue Gruppe erstellen
   const handleCreateGroup = async (name: string, category: string) => {
     try {
-      const res = await fetch(`${API_URL}/api/groups`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          category,
-          avatar_url: "https://example.com/avatar.jpg",
-          auth0_sub: uid,
-        }),
+      const { data, error } = await supabase.functions.invoke("create-group", {
+        body: { name, category, avatar_url: null },
       });
-      if (!res.ok) throw new Error("Error creating group");
 
-      const group = await res.json();
+      if (error) {
+        console.error("Error fetching groups:", error);
+        throw new Error(error.message);
+      }
 
-      const inviteRes = await fetch(
-        `${API_URL}/api/groups/${group.id}/invite`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-      if (!inviteRes.ok) throw new Error("Error fetching invite link");
+      const res = await JSON.parse(data);
+      const groupId = res.id;
+      const invite_link = res.invite_token;
 
-      const data = await inviteRes.json();
-      await fetchGroups();
-
-      return { group: { id: group.id }, inviteLink: data.invite_link };
+      return { groupId: groupId as number, inviteLink: invite_link as string };
     } catch (err) {
       console.error(err);
       Alert.alert("Error", "Failed to create group");
-      return { group: { id: -1 }, inviteLink: "" };
+      return { groupId: -1, inviteLink: "" };
     }
   };
 
-  // Gruppe öffnen
   const handleGroupClick = (groupId: number) => {
-    router.push(`/`);
+    router.push(`/profile`);
     // router.push(`/groups/${groupId}`);
   };
 
@@ -108,25 +93,29 @@ const GroupsPage: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.card}>
+      <ScrollView style={styles.card}>
         <Text style={styles.title}>My Groups</Text>
 
-        {groups.length === 0 ? (
-          <Text style={styles.noGroups}>No groups found</Text>
-        ) : (
+        {groups?.length ? (
           <FlatList
-            data={groups}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.groupButton}
-                onPress={() => handleGroupClick(item.id)}
-              >
-                <Text style={styles.groupName}>{item.name}</Text>
-              </TouchableOpacity>
-            )}
+            data={groups || []}
+            keyExtractor={(item, index) =>
+              item?.id?.toString() ?? index.toString()
+            }
+            renderItem={({ item }) =>
+              item ? (
+                <TouchableOpacity
+                  style={styles.groupButton}
+                  onPress={() => handleGroupClick(item.id)}
+                >
+                  <Text style={styles.groupName}>{item.name}</Text>
+                </TouchableOpacity>
+              ) : null
+            }
             contentContainerStyle={styles.list}
           />
+        ) : (
+          <Text style={styles.noGroups}>No groups found</Text>
         )}
 
         <TouchableOpacity
@@ -139,16 +128,14 @@ const GroupsPage: React.FC = () => {
         {/* Dialog (Modal) */}
         <GroupsDialog
           dialogState={dialogOpen}
-          onClose={() => setDialogOpen(false)}
+          onClose={() => (setDialogOpen(false), fetchGroups())}
           onCreateGroup={handleCreateGroup}
           viewGroup={handleGroupClick}
         />
-      </View>
+      </ScrollView>
     </View>
   );
-};
-
-export default GroupsPage;
+}
 
 const styles = StyleSheet.create({
   container: {

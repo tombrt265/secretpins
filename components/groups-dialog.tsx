@@ -20,7 +20,7 @@ interface GroupsDialogProps {
     name: string,
     category: string
   ) => Promise<{
-    group: { id: number };
+    groupId: number;
     inviteLink: string;
   }>;
   viewGroup: (groupId: number) => void;
@@ -50,8 +50,8 @@ const GroupsDialog: React.FC<GroupsDialogProps> = ({
 
     setIsLoading(true);
     try {
-      const { group, inviteLink } = await onCreateGroup(groupName, category);
-      setGroupId(group.id);
+      const { groupId, inviteLink } = await onCreateGroup(groupName, category);
+      setGroupId(groupId);
       setInviteLink(inviteLink);
       setGroupSetUp(true);
     } catch (err) {
@@ -150,8 +150,8 @@ const GroupsDialog: React.FC<GroupsDialogProps> = ({
 
               <TouchableOpacity
                 style={[styles.createButton, { marginTop: 16 }]}
-                onPress={() => groupId != null && viewGroup(groupId)}
-                disabled={groupId == null}
+                onPress={() => (handleClose(), viewGroup(groupId!))}
+                disabled={groupId === null}
               >
                 <Text style={styles.createButtonText}>View Group</Text>
               </TouchableOpacity>

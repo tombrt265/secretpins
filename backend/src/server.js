@@ -1,8 +1,8 @@
-import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import crypto from "crypto";
-import { qOne, qAll, exec } from "./db.js";
+import dotenv from "dotenv";
+import express from "express";
+import { exec, qAll, qOne } from "./db.js";
 
 dotenv.config();
 
@@ -26,45 +26,11 @@ app.get("/api/health", async (_req, res) => {
   res.json({ status: "ok", pg: row?.v, time: new Date().toISOString() });
 });
 
+//
+//
 // -------- Routes -----------
-
-// POST /api/users/signup
-app.post("/api/users/signup", async (req, res) => {
-  const { username, email, auth0_sub, picture } = req.body;
-
-  if (!username || !email) {
-    return res
-      .status(400)
-      .json({ error: "Username und Email sind erforderlich" });
-  }
-
-  try {
-    let user = await qOne(
-      "select * from users where username = $1 or email = $2",
-      [username, email]
-    );
-
-    if (user) {
-      return res
-        .status(409)
-        .json({ error: "Username oder Email bereits vergeben" });
-    }
-
-    const avatarUrl = picture;
-
-    user = await qOne(
-      `insert into users (username, email, auth0_sub, avatar_url)
-       values ($1, $2, $3, $4)
-       returning id, username, email, auth0_sub, avatar_url, created_at`,
-      [username, email, auth0_sub || null, avatarUrl]
-    );
-
-    res.status(201).json(user);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Fehler beim Erstellen des Users" });
-  }
-});
+//
+//
 
 // POST /api/groups/:groupId/invite
 app.post("/api/groups/:groupId/invite", async (req, res) => {
@@ -140,71 +106,6 @@ app.post("/api/groups/join", async (req, res) => {
     message: "Erfolgreich der Gruppe beigetreten",
     group_id: invite.group_id,
   });
-});
-
-// GET /api/groups?user_id=<auth0_sub>
-app.get("/api/groups", async (req, res) => {
-  const { user_id } = req.query; // = auth0_sub
-  if (!user_id)
-    return res
-      .status(400)
-      .json({ error: "user_id query parameter is required" });
-
-  const user = await qOne("select id from users where auth0_sub = $1", [
-    user_id,
-  ]);
-  if (!user) return res.json([]);
-
-  const groups = await qAll(
-    `select g.*
-     from groups g
-     join group_members gm on gm.group_id = g.id
-     where gm.user_id = $1
-     order by g.created_at desc`,
-    [user.id]
-  );
-
-  res.json(groups);
-});
-
-// POST /api/groups
-app.post("/api/groups", async (req, res) => {
-  const { name, category, avatar_url, auth0_sub } = req.body;
-
-  if (!name || !auth0_sub || !category || !avatar_url) {
-    return res.status(400).json({
-      error: "Name, auth0_sub, category und avatar_url sind erforderlich",
-    });
-  }
-
-  try {
-    const user = await qOne("select id from users where auth0_sub = $1", [
-      auth0_sub,
-    ]);
-    if (!user) {
-      return res
-        .status(404)
-        .json({ error: "User existiert nicht. Bitte vorher anmelden." });
-    }
-
-    const group = await qOne(
-      `insert into groups (name, owner_id, avatar_url, category, is_active)
-       values ($1, $2, $3, $4, true)
-       returning id, name, category, avatar_url, owner_id`,
-      [name, user.id, avatar_url, category]
-    );
-
-    await exec(
-      `insert into group_members (group_id, user_id, role, is_active)
-       values ($1, $2, 'owner', true)`,
-      [group.id, user.id]
-    );
-
-    res.status(201).json(group);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Fehler beim Erstellen der Gruppe" });
-  }
 });
 
 // DELETE /api/groups/:groupId
