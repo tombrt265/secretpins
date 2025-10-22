@@ -1,7 +1,6 @@
-import { API_BASE_URL } from "@env";
+import { AuthContext } from "@/contexts/AuthContext";
 import { useRouter } from "expo-router";
-import { getAuth } from "firebase/auth";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -12,6 +11,7 @@ import {
   View,
 } from "react-native";
 import GroupsDialog from "../../components/groups-dialog";
+import { API_URL } from "../../utils/api";
 
 interface Group {
   id: number;
@@ -22,11 +22,9 @@ interface Group {
 }
 
 const GroupsPage: React.FC = () => {
-  const auth = getAuth();
-  const user = auth.currentUser;
-  const userId = user?.uid;
-
   const router = useRouter();
+  const auth = useContext(AuthContext);
+  const uid = auth?.user?.id || null;
 
   const [groups, setGroups] = useState<Group[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -34,11 +32,11 @@ const GroupsPage: React.FC = () => {
 
   // Lädt Gruppen des aktuellen Nutzers
   const fetchGroups = useCallback(async () => {
-    if (!userId) return;
+    if (!uid) return;
     try {
       setLoading(true);
       const res = await fetch(
-        `${API_BASE_URL}/api/groups?user_id=${encodeURIComponent(userId)}`
+        `${API_URL}/api/groups?user_id=${encodeURIComponent(uid)}`
       );
       if (!res.ok) throw new Error("Failed to fetch groups");
       const json = await res.json();
@@ -49,25 +47,25 @@ const GroupsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [uid]);
 
   useEffect(() => {
-    if (userId) {
+    if (uid) {
       fetchGroups();
     }
-  }, [userId, fetchGroups]);
+  }, [uid, fetchGroups]);
 
   // Neue Gruppe erstellen
   const handleCreateGroup = async (name: string, category: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/groups`, {
+      const res = await fetch(`${API_URL}/api/groups`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
           category,
           avatar_url: "https://example.com/avatar.jpg",
-          auth0_sub: userId,
+          auth0_sub: uid,
         }),
       });
       if (!res.ok) throw new Error("Error creating group");
@@ -75,7 +73,7 @@ const GroupsPage: React.FC = () => {
       const group = await res.json();
 
       const inviteRes = await fetch(
-        `${API_BASE_URL}/api/groups/${group.id}/invite`,
+        `${API_URL}/api/groups/${group.id}/invite`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
