@@ -36,11 +36,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const saved = await getSession();
         if (saved) {
           const session = JSON.parse(saved);
-          const result = await supabase.auth.setSession({
-            access_token: session.access_token,
-            refresh_token: session.refresh_token,
-          });
-          setUser(session.user);
+          try {
+            const { data, error } = await supabase.auth.setSession({
+              access_token: session.access_token,
+              refresh_token: session.refresh_token,
+            });
+
+            // If supabase returned an error or no session, treat as signed out
+            if (error || !data?.session) {
+              console.warn(
+                "AUTH_PROVIDER: restore - refresh failed, clearing saved session",
+                error
+              );
+              await deleteSession();
+              setUser(null);
+            } else {
+              // use the server-returned session user (fresh)
+              setUser(data.session.user);
+              await saveSession(JSON.stringify(data.session));
+            }
+          } catch (err) {
+            console.error("AUTH_PROVIDER: restore - setSession error", err);
+            await deleteSession();
+            setUser(null);
+          }
         }
       } catch (err) {
         console.error("AUTH_PROVIDER: restore error", err);
@@ -51,19 +70,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     restore();
 
-    const sub = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("AUTH_PROVIDER: onAuthStateChange", { event, session });
-    });
+    const { data: subscription } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        try {
+          console.log("AUTH_PROVIDER: onAuthStateChange", { event, session });
+
+          if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+            // session may be null in some events
+            if (session?.access_token && session?.refresh_token) {
+              await saveSession(JSON.stringify(session));
+            }
+            setUser(session?.user ?? null);
+          } else if (
+            event === "SIGNED_OUT" ||
+            (event === "TOKEN_REFRESHED" && !session)
+          ) {
+            // clear local session when signed out
+            await deleteSession();
+            setUser(null);
+          } else if (event === "PASSWORD_RECOVERY") {
+            // keep user cleared until explicit sign-in
+            setUser(null);
+          }
+        } catch (err) {
+          console.error("AUTH_PROVIDER: onAuthStateChange handler error", err);
+        }
+      }
+    );
 
     return () => {
       try {
-        const anySub: any = sub;
-        if (anySub?.data?.subscription?.unsubscribe) {
-          anySub.data.subscription.unsubscribe();
-        } else if (typeof anySub?.unsubscribe === "function") {
-          anySub.unsubscribe();
+        if (subscription?.subscription?.unsubscribe) {
+          subscription.subscription.unsubscribe();
+        } else if (typeof (subscription as any)?.unsubscribe === "function") {
+          (subscription as any).unsubscribe();
         }
-      } catch (_) {
+      } catch {
         // ignore
       }
     };

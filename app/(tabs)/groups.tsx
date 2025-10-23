@@ -5,7 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  ScrollView,
+  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -79,8 +79,13 @@ export default function GroupsPage() {
   };
 
   const handleGroupClick = (groupId: number) => {
-    router.push(`/profile`);
-    // router.push(`/groups/${groupId}`);
+    router.push({
+      pathname: `/groups/[id]`,
+      params: {
+        id: groupId.toString(),
+        group: JSON.stringify(groups.find((g) => g.id === groupId)),
+      },
+    });
   };
 
   if (loading) {
@@ -93,7 +98,7 @@ export default function GroupsPage() {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.card}>
+      <View style={styles.card}>
         <Text style={styles.title}>My Groups</Text>
 
         {groups?.length ? (
@@ -104,11 +109,21 @@ export default function GroupsPage() {
             }
             renderItem={({ item }) =>
               item ? (
-                <TouchableOpacity
-                  style={styles.groupButton}
-                  onPress={() => handleGroupClick(item.id)}
-                >
-                  <Text style={styles.groupName}>{item.name}</Text>
+                <TouchableOpacity style={styles.groupButton}>
+                  <Image
+                    source={{
+                      uri:
+                        item.avatar_url ||
+                        "https://www.gravatar.com/avatar/?d=mp",
+                    }}
+                    style={styles.memberAvatar}
+                  />
+                  <Text
+                    style={styles.groupName}
+                    onPress={() => handleGroupClick(item.id)}
+                  >
+                    {item.name}
+                  </Text>
                 </TouchableOpacity>
               ) : null
             }
@@ -132,7 +147,7 @@ export default function GroupsPage() {
           onCreateGroup={handleCreateGroup}
           viewGroup={handleGroupClick}
         />
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -164,7 +179,13 @@ const styles = StyleSheet.create({
   },
   noGroups: { textAlign: "center", color: "#666", marginBottom: 16 },
   list: { gap: 8 },
-  groupButton: { backgroundColor: "#fff", padding: 12, borderRadius: 10 },
+  groupButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 10,
+  },
   groupName: { fontSize: 16, color: "#222" },
   createButton: {
     backgroundColor: "#4F46E5",
@@ -173,4 +194,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   createButtonText: { color: "#fff", fontWeight: "600", textAlign: "center" },
+  memberAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
 });

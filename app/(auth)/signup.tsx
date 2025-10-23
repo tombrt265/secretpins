@@ -19,14 +19,14 @@ export default function Signup() {
 
   const handleSignup = async () => {
     try {
-      const { data, error: signUpError } = await fetchSignup(
+      const { error: signUpError } = await fetchSignup(
         email,
         password,
         username
       );
       if (signUpError) throw signUpError;
       await signIn(email, password);
-      router.replace("/(tabs)/home");
+      router.replace("/groups");
     } catch (err: any) {
       setError(err.message || "Signup failed");
     }
@@ -40,7 +40,7 @@ export default function Signup() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name: username } },
+      options: { data: { username: username } },
     });
     return { data, error };
   };

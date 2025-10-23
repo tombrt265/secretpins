@@ -28,7 +28,7 @@ export default function Layout() {
   return (
     <Tabs>
       <Tabs.Screen
-        name="home"
+        name="groups"
         options={{
           headerShown: false,
           tabBarShowLabel: false,

@@ -3,7 +3,7 @@ import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import { Alert, Image, StyleSheet, TouchableOpacity, View } from "react-native";
 
-const defaultAvatar = "https://via.placeholder.com/150"; // Fallback Image
+const defaultAvatar = "https://www.gravatar.com/avatar/?d=mp"; // Fallback Image
 
 const ImageUploader: React.FC = () => {
   const [avatarUrl, setAvatarUrl] = useState<string>(defaultAvatar);
