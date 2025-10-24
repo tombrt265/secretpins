@@ -32,7 +32,7 @@ export default function Layout() {
         options={{
           headerShown: false,
           tabBarShowLabel: false,
-          tabBarIcon: () => <Feather name="home" size={24} color="black" />,
+          tabBarIcon: () => <Feather name="map" size={24} color="black" />,
           tabBarIconStyle: { margin: "auto" },
         }}
       />
