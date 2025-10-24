@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "splitmates-mobile",
-    "slug": "splitmates-mobile",
+    "name": "tracer",
+    "slug": "tracer",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "splitmatesmobile",
+    "scheme": "tracer",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

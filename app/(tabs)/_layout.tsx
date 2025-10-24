@@ -28,29 +28,11 @@ export default function Layout() {
   return (
     <Tabs>
       <Tabs.Screen
-        name="groups"
+        name="map"
         options={{
           headerShown: false,
           tabBarShowLabel: false,
           tabBarIcon: () => <Feather name="home" size={24} color="black" />,
-          tabBarIconStyle: { margin: "auto" },
-        }}
-      />
-      <Tabs.Screen
-        name="expense-form"
-        options={{
-          headerShown: false,
-          tabBarShowLabel: false,
-          tabBarIcon: () => <Feather name="plus" size={24} color="black" />,
-          tabBarIconStyle: { margin: "auto" },
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          headerShown: false,
-          tabBarShowLabel: false,
-          tabBarIcon: () => <Feather name="user" size={24} color="black" />,
           tabBarIconStyle: { margin: "auto" },
         }}
       />
