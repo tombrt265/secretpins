@@ -36,6 +36,24 @@ export default function Layout() {
           tabBarIconStyle: { margin: "auto" },
         }}
       />
+      <Tabs.Screen
+        name="post"
+        options={{
+          headerShown: false,
+          tabBarShowLabel: false,
+          tabBarIcon: () => <Feather name="plus" size={24} color="black" />,
+          tabBarIconStyle: { margin: "auto" },
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          headerShown: false,
+          tabBarShowLabel: false,
+          tabBarIcon: () => <Feather name="user" size={24} color="black" />,
+          tabBarIconStyle: { margin: "auto" },
+        }}
+      />
     </Tabs>
   );
 }
