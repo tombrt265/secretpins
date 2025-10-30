@@ -26,7 +26,7 @@ export default function Signup() {
       );
       if (signUpError) throw signUpError;
       await signIn(email, password);
-      router.replace("/map");
+      router.replace("/home");
     } catch (err: any) {
       setError(err.message || "Signup failed");
     }

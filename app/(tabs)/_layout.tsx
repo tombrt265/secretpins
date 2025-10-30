@@ -28,11 +28,11 @@ export default function Layout() {
   return (
     <Tabs>
       <Tabs.Screen
-        name="map"
+        name="home"
         options={{
           headerShown: false,
           tabBarShowLabel: false,
-          tabBarIcon: () => <Feather name="map" size={24} color="black" />,
+          tabBarIcon: () => <Feather name="home" size={24} color="black" />,
           tabBarIconStyle: { margin: "auto" },
         }}
       />
